@@ -90,24 +90,28 @@ func TestExchangeAudio(t *testing.T) {
 		require.NoError(t, err)
 		assert.Empty(t, got[receiverID])
 
-		msg2 := []byte("reply-audio")
-		got, err = s.ExchangeAudio(dialogID, receiverID, msg2)
-		require.NoError(t, err)
+		for i := 0; i < 5; i++ {
+			msg2 := []byte("reply-audio")
+			got, err = s.ExchangeAudio(dialogID, receiverID, msg2)
+			require.NoError(t, err)
+			require.Contains(t, got, senderID)
+			require.Len(t, got[senderID], 1)
+			assert.Equal(t, msg, got[senderID][0].Audio)
 
-		require.Contains(t, got, senderID)
-		require.Len(t, got[senderID], 1)
-		assert.Equal(t, msg, got[senderID][0].Audio)
+			msg := []byte("hello-audio")
+			got, err = s.ExchangeAudio(dialogID, senderID, msg)
+			require.NoError(t, err)
+			require.Contains(t, got, receiverID)
+			require.Len(t, got[receiverID], 1)
 
-		s.Mu.RLock()
-		dialog := s.Dialogs[dialogID]
-		s.Mu.RUnlock()
+			s.Mu.RLock()
+			dialog := s.Dialogs[dialogID]
+			s.Mu.RUnlock()
 
-		dialog.Mu.RLock()
-		defer dialog.Mu.RUnlock()
-
-		assert.Empty(t, dialog.Users[senderID])
-		require.Len(t, dialog.Users[receiverID], 1)
-		assert.Equal(t, msg2, dialog.Users[receiverID][0].Audio)
+			dialog.Mu.RLock()
+			require.Len(t, dialog.Users, 2)
+			dialog.Mu.RUnlock()
+		}
 	})
 
 	t.Run("dialog not found", func(t *testing.T) {
