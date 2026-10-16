@@ -2,6 +2,7 @@ package httphandlers
 
 import (
 	"AudioDialog/internal/storage"
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -43,6 +44,7 @@ func (s *HTTPExchangeAudioService) ExchangeAudioHandler(c echo.Context) error {
 
 	resp, err := s.storage.ExchangeAudio(req.DialogID, req.UserID, req.Message)
 	if err != nil {
+		slog.Error("Exchange messages", "dialogID", req.DialogID, "userID", req.UserID, "error", err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "failed to exchange audio"})
 	}
 
